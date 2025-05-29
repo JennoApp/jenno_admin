@@ -1,0 +1,43 @@
+<script lang="ts">
+ import House from "@lucide/svelte/icons/house";
+ import Inbox from "@lucide/svelte/icons/inbox";
+ import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+
+ // Menu items
+ const items = [
+  {
+   title: "Inicio",
+   url: "/",
+   icon: House,
+  },
+  {
+   title: "Retiros de dinero",
+   url: "/withdrawals",
+   icon: Inbox,
+  },
+ ];
+</script>
+
+<Sidebar.Root>
+ <Sidebar.Content>
+  <Sidebar.Group>
+   <Sidebar.GroupLabel>Jenno Admin</Sidebar.GroupLabel>
+   <Sidebar.GroupContent>
+    <Sidebar.Menu>
+     {#each items as item (item.title)}
+      <Sidebar.MenuItem>
+       <Sidebar.MenuButton>
+        {#snippet child({ props })}
+         <a href={item.url} {...props}>
+          <item.icon />
+          <span>{item.title}</span>
+         </a>
+        {/snippet}
+       </Sidebar.MenuButton>
+      </Sidebar.MenuItem>
+     {/each}
+    </Sidebar.Menu>
+   </Sidebar.GroupContent>
+  </Sidebar.Group>
+ </Sidebar.Content>
+</Sidebar.Root>
