@@ -19,6 +19,7 @@
 <div class="min-h-screen flex items-center justify-center">
   <form
     method="POST"
+    action="?/login"
     use:enhance
     class="bg-[#202020] p-6 rounded-lg shadow-md w-80 space-y-4"
   >
