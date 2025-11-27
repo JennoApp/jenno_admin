@@ -6,8 +6,8 @@
  // Menu items
  const items = [
   {
-   title: "Inicio",
-   url: "/",
+   title: "Dashboard",
+   url: "/dashboard",
    icon: House,
   },
   {
