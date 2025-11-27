@@ -1,6 +1,5 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { goto } from "$app/navigation";
   import { form } from "$app/server";
 
   let errorMessage = $state<string>("");
@@ -8,10 +7,6 @@
   $effect(() => {
     if (form?.errorMessage) {
       errorMessage = form.errorMessage;
-    }
-
-    if (form?.success) {
-      goto("/dashboard");
     }
   });
 </script>

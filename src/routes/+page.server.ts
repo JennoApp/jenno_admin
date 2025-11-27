@@ -1,5 +1,6 @@
 import type { Actions } from './$types'
 import { PRIVATE_SERVER_URL } from '$env/static/private'
+import { redirect } from '@sveltejs/kit'
 
 export const actions: Actions = {
   login: async ({ cookies, request }) => {
@@ -30,8 +31,6 @@ export const actions: Actions = {
       maxAge: 60 * 60 * 24 * 45
     })
 
-    return {
-      success: true
-    }
+    throw redirect(303, '/dashboard');
   }
 }
