@@ -4,6 +4,8 @@
 
     let totalTiendas = $state<number | null>(null);
     let totalUsuarios = $state<number | null>(null);
+    let totalVentas = $state<number | null>(null);
+    let gmvTotal = $state<number | null>(null);
 
     const fetchCounts = async () => {
         try {
@@ -16,6 +18,16 @@
             const resPersonal = await fetch('api/users/countByAccountType?accountType=personal');
             const { count: countPersonal }= await resPersonal.json();
             totalUsuarios = countPersonal;
+
+
+            const resOrdersCompleted = await fetch('api/orders/countcompleted')
+            const { count: countOrdersCompleted }= await resOrdersCompleted.json();
+            totalVentas = countOrdersCompleted;
+
+
+            const resGMVTotal = await fetch('api/orders/totalGMV')
+            const { totalGMV }= await resGMVTotal.json();
+            gmvTotal = totalGMV;
 
         } catch (error) {
             console.error("Error fetching counts:", error);
@@ -64,7 +76,9 @@
 			<Card.Description>Transacciones completadas</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<p class="text-3xl font-bold">3,452</p>
+			<p class="text-3xl font-bold">
+        {totalVentas ?? 'Cargando...'}
+      </p>
 		</Card.Content>
 	</Card.Root>
 
@@ -75,7 +89,9 @@
 			<Card.Description>Ingresos generados por vendedores</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<p class="text-3xl font-bold">$ 89,540,000</p>
+			<p class="text-3xl font-bold">
+        {gmvTotal !== null ? `$ ${gmvTotal.toLocaleString()}` : 'Cargando...'}
+      </p>
 		</Card.Content>
 	</Card.Root>
 
@@ -86,7 +102,9 @@
 			<Card.Description>10% del GMV total</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<p class="text-3xl font-bold">$ 8,954,000</p>
+			<p class="text-3xl font-bold">
+        {gmvTotal !== null ? `$ ${(gmvTotal * 0.10).toLocaleString()}` : 'Cargando...'}
+      </p>
 		</Card.Content>
 	</Card.Root>
 
