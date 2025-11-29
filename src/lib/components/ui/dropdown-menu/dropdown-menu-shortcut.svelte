@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { HTMLAttributes } from "svelte/elements";
-	import type { WithElementRef } from "bits-ui";
+	import { type WithElementRef } from "bits-ui";
 	import { cn } from "$lib/utils.js";
 
 	let {
@@ -8,16 +8,13 @@
 		class: className,
 		children,
 		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLTableRowElement>> = $props();
+	}: WithElementRef<HTMLAttributes<HTMLSpanElement>> = $props();
 </script>
 
-<tr
+<span
 	bind:this={ref}
-	class={cn(
-		"hover:bg-[#303030] data-[state=selected]:bg-muted border-b transition-colors",
-		className
-	)}
+	class={cn("ml-auto text-xs tracking-widest opacity-60", className)}
 	{...restProps}
 >
 	{@render children?.()}
-</tr>
+</span>

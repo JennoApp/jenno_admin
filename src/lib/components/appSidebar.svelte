@@ -13,7 +13,7 @@
       icon: House,
     },
     {
-      title: "Retiros de dinero",
+      title: "Solicitudes Retiros",
       url: "/withdrawals",
       icon: Inbox,
     },
