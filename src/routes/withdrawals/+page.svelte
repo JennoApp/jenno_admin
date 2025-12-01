@@ -7,6 +7,7 @@
     renderComponent,
     FlexRender,
   } from "$lib/components/ui/data-table/index";
+  import { toast } from "svelte-sonner";
 
   import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
   import DataTableActions from "./DataTableActions.svelte";
@@ -178,24 +179,30 @@
     try {
       if (!serverUrl) await getServerUrl();
 
-      const response = await fetch(
-        `${serverUrl}/wallet/withdrawals/${id}/status`,
-        {
-          method: "PATCH", // O PUT, depende de tu backend
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        },
-      );
+      const url = `${serverUrl}/wallet/withdrawals/${id}/status`;
+
+      const response = await fetch(url, {
+        method: "PATCH", // O PUT, depende de tu backend
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
       if (response.ok) {
         await fetchPendingWithdrawals();
 
-        alert("Estado actualizado correctamente");
+        toast.success(
+          `Retiro ${id.substring(id.length - 8)} actualizado a: ${newStatus.toUpperCase()}`,
+        );
       } else {
-        console.error("Error al actualizar estado");
+        const errorData = await response.json();
+        console.error("Error al actualizar estado:", errorData);
+        toast.error(
+          errorData.message || "Error desconocido al actualizar el estado",
+        );
       }
     } catch (e) {
-      console.error(e);
+      console.error("Error de red o desconocido:", e);
+      toast.error("Error de conexión al intentar actualizar el estado.");
     }
   }
 
