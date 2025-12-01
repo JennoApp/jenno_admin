@@ -9,15 +9,16 @@
   } from "$lib/components/ui/data-table/index";
 
   import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
-
   import DataTableActions from "./DataTableActions.svelte";
 
   let withdrawals = $state<any[]>([]);
   let metaInfo = $state<any>();
   let serverUrl = $state<string>("");
 
-  let page = 1;
+  let page = $state<number>(1);
   let limit = 10;
+  let itemsCount = $state<number>(0);
+  let totalPages = $state<number>(1);
 
   // Obtener url del servidor
   async function getServerUrl() {
@@ -44,7 +45,7 @@
     bankAccountType: string;
   };
 
-  // 1. Definición de Columnas
+  // Definición de Columnas
   const columns: ColumnDef<Withdrawal>[] = [
     {
       accessorKey: "walletId",
@@ -114,7 +115,7 @@
       cell: ({ row }) => {
         // Renderizamos el componente de acciones pasando el withdrawalId
         return renderComponent(DataTableActions, {
-          id: row.original.withdrawalId, // <-- CAMBIO CLAVE: USAR withdrawalId
+          id: row.original.withdrawalId, //
           status: row.original.status,
           onUpdateStatus: changeWithdrawalStatus, // Pasamos la función del padre
         });
@@ -122,7 +123,7 @@
     },
   ];
 
-  // 2. Configuración de la Tabla (Svelte 5 + TanStack)
+  // Configuración de la Tabla (Svelte 5 + TanStack)
   const table = createSvelteTable({
     get data() {
       return withdrawals;
@@ -151,8 +152,25 @@
       // Reemplazamos los datos o los propagamos
       withdrawals = data || [];
       metaInfo = meta || {};
+
+      itemsCount = meta.itemCount || 0;
+      totalPages = meta.pageCount || 1;
     } catch (error) {
       console.error("Error fetching pending withdrawals:", error);
+    }
+  }
+
+  function goToPreviousPage() {
+    if (page > 1) {
+      page -= 1;
+      fetchPendingWithdrawals();
+    }
+  }
+
+  function goToNextPage() {
+    if (page < totalPages) {
+      page += 1;
+      fetchPendingWithdrawals();
     }
   }
 
@@ -185,7 +203,7 @@
     fetchPendingWithdrawals();
   });
 
-  $inspect(withdrawals, metaInfo);
+  $inspect(withdrawals, metaInfo, totalPages);
 </script>
 
 <div class="flex justify-between h-20 m-5 py-6">
@@ -217,7 +235,10 @@
     <Table.Body>
       {#if table.getRowModel().rows?.length}
         {#each table.getRowModel().rows as row (row.id)}
-          <Table.Row data-state={row.getIsSelected() && "selected"} class="border-[#353535]">
+          <Table.Row
+            data-state={row.getIsSelected() && "selected"}
+            class="border-[#353535]"
+          >
             {#each row.getVisibleCells() as cell (cell.id)}
               <Table.Cell class="text-gray-300">
                 <FlexRender
@@ -237,4 +258,36 @@
       {/if}
     </Table.Body>
   </Table.Root>
+</div>
+
+<div class="flex justify-between items-center px-5 mx-5 mt-4 mb-8">
+  <div class="text-sm text-gray-500 dark:text-gray-400">
+    <span class="font-semibold">{metaInfo?.itemCount ?? 0}</span> solicitudes en
+    total.
+
+    <span class="ml-4">
+      Página <span class="font-semibold">{page}</span> de
+      <span class="font-semibold">{totalPages}</span>
+    </span>
+  </div>
+
+  <div class="space-x-2">
+    <Button
+      variant="outline"
+      size="sm"
+      onclick={goToPreviousPage}
+      disabled={page <= 1}
+    >
+      Anterior
+    </Button>
+
+    <Button
+      variant="outline"
+      size="sm"
+      onclick={goToNextPage}
+      disabled={page >= totalPages}
+    >
+      Siguiente
+    </Button>
+  </div>
 </div>

@@ -2,6 +2,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Ellipsis } from "lucide-svelte";
+  import { toast } from 'svelte-sonner'
 
   // Props recibidas desde la definición de columnas
   let { id, status, onUpdateStatus } = $props();
@@ -24,7 +25,10 @@
   <DropdownMenu.Content>
     <DropdownMenu.Group>
       <DropdownMenu.Label>Acciones</DropdownMenu.Label>
-      <DropdownMenu.Item onclick={() => navigator.clipboard.writeText(id)}>
+      <DropdownMenu.Item onclick={() => {
+        navigator.clipboard.writeText(id)
+        toast.info('ID copiado al portapapeles')
+      }}>
         Copiar ID
       </DropdownMenu.Item>
       <DropdownMenu.Separator />
