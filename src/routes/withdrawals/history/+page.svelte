@@ -1,19 +1,15 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index";
   import * as Table from "$lib/components/ui/table/index"; // Importar componentes visuales de tabla
   import {
     createSvelteTable,
-    renderComponent,
     FlexRender,
   } from "$lib/components/ui/data-table/index";
   import { toast } from "svelte-sonner";
 
   import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
-  import DataTableActions from "./DataTableActions.svelte";
 
   let withdrawals = $state<any[]>([]);
-  let metaInfo = $state<any>();
   let serverUrl = $state<string>("");
 
   let page = $state<number>(1);
@@ -52,7 +48,6 @@
       accessorKey: "walletId",
       header: "Tienda (Wallet ID)",
       cell: ({ row }) => {
-        // Muestra solo el final del ID de la Wallet como identificador de la tienda
         const walletId = row.original.walletId as string;
         return walletId.substring(walletId.length - 8).toUpperCase();
       },
@@ -62,7 +57,6 @@
       header: "Monto",
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("amount") as any);
-        // Formatear a moneda
         return new Intl.NumberFormat("es-CO", {
           style: "currency",
           currency: "COP",
@@ -76,7 +70,6 @@
       cell: ({ row }) => {
         const name = row.original.bankAccountName || "N/A";
         const type = row.original.bankAccountType || "";
-        // Combina el nombre del titular y el tipo de banco
         return `${name} (${type})`;
       },
     },
@@ -84,7 +77,6 @@
       accessorKey: "bankAccountNumber",
       header: "Nro. Cuenta",
       cell: ({ row }) => {
-        // Muestra el número de cuenta bancaria
         return row.original.bankAccountNumber || "N/A";
       },
     },
@@ -94,7 +86,6 @@
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         return status.toUpperCase();
-        // Si necesitas el span con color, crea un StatusBadge.svelte y usa renderComponent(StatusBadge, { status: status })
       },
     },
     {
@@ -109,22 +100,9 @@
           minute: "2-digit",
         }),
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      header: "Acciones",
-      cell: ({ row }) => {
-        // Renderizamos el componente de acciones pasando el withdrawalId
-        return renderComponent(DataTableActions, {
-          id: row.original.withdrawalId, //
-          status: row.original.status,
-          onUpdateStatus: changeWithdrawalStatus, // Pasamos la función del padre
-        });
-      },
-    },
   ];
 
-  // Configuración de la Tabla (Svelte 5 + TanStack)
+  // Configuración de la Tabla
   const table = createSvelteTable({
     get data() {
       return withdrawals;
@@ -133,13 +111,13 @@
     getCoreRowModel: getCoreRowModel(),
   });
 
-  async function fetchPendingWithdrawals() {
+  async function fetchWithdrawalHistory() {
     try {
       if (!serverUrl) await getServerUrl();
       if (!serverUrl) return;
 
       const response = await fetch(
-        `${serverUrl}/wallet/withdrawals/pending?page=${page}&limit=${limit}`,
+        `${serverUrl}/wallet/withdrawals/history?page=${page}&limit=${limit}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -148,77 +126,40 @@
 
       const { data, meta } = await response.json();
 
-      console.log("Respuesta API Withdrawals:", data);
-
-      // Reemplazamos los datos o los propagamos
       withdrawals = data || [];
-      metaInfo = meta || {};
 
       itemsCount = meta.itemCount || 0;
       totalPages = meta.pageCount || 1;
     } catch (error) {
-      console.error("Error fetching pending withdrawals:", error);
+      console.error("Error fetching withdrawal history:", error);
+      toast.error("Error al cargar el historial de retiros.");
     }
   }
 
+  // FUNCIONES DE PAGINACIÓN
   function goToPreviousPage() {
     if (page > 1) {
       page -= 1;
-      fetchPendingWithdrawals();
+      fetchWithdrawalHistory();
     }
   }
 
   function goToNextPage() {
     if (page < totalPages) {
       page += 1;
-      fetchPendingWithdrawals();
-    }
-  }
-
-  async function changeWithdrawalStatus(id: string, newStatus: string) {
-    try {
-      if (!serverUrl) await getServerUrl();
-
-      const url = `${serverUrl}/wallet/withdrawals/${id}/status`;
-
-      const response = await fetch(url, {
-        method: "PATCH", // O PUT, depende de tu backend
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        await fetchPendingWithdrawals();
-
-        toast.success(
-          `Retiro ${id.substring(id.length - 8)} actualizado a: ${newStatus.toUpperCase()}`,
-        );
-      } else {
-        const errorData = await response.json();
-        console.error("Error al actualizar estado:", errorData);
-        toast.error(
-          errorData.message || "Error desconocido al actualizar el estado",
-        );
-      }
-    } catch (e) {
-      console.error("Error de red o desconocido:", e);
-      toast.error("Error de conexión al intentar actualizar el estado.");
+      fetchWithdrawalHistory();
     }
   }
 
   $effect(() => {
-    fetchPendingWithdrawals();
+    fetchWithdrawalHistory();
   });
-
-  $inspect(withdrawals, metaInfo, totalPages);
 </script>
 
 <div class="flex justify-between h-20 m-5 py-6">
-  <h2 class="text-xl font-semibold dark:text-gray-200">Retiros Pendientes</h2>
-  <Button variant="secondary" onclick={() => goto("/withdrawals/history")}>
-    <iconify-icon icon="material-symbols:history" class=""> </iconify-icon>
-    Historial
-  </Button>
+  <h2 class="text-xl font-semibold dark:text-gray-200">
+    Historial de Retiros (Completados y Rechazados)
+  </h2>
 </div>
 
 <div class="px-5 mx-5 border border-[#353535] rounded-md">
@@ -259,7 +200,7 @@
       {:else}
         <Table.Row class="border-[#353535]">
           <Table.Cell colspan={columns.length} class="h-24 text-center">
-            No hay resultados.
+            No hay resultados en el historial.
           </Table.Cell>
         </Table.Row>
       {/if}
@@ -269,7 +210,7 @@
 
 <div class="flex justify-between items-center px-5 mx-5 mt-4 mb-8">
   <div class="text-sm text-gray-500 dark:text-gray-400">
-    <span class="font-semibold">{metaInfo?.itemCount ?? 0}</span> solicitudes en
+    <span class="font-semibold">{itemsCount ?? 0}</span> solicitudes en
     total.
 
     <span class="ml-4">
